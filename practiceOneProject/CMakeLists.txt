@@ -8,7 +8,17 @@ include_directories(.)
 add_executable(${PROJECT_NAME}
         igvInterface.cpp
         igvInterface.h
-        pr1.cpp)
+        pr1.cpp
+        src/Object3D.cpp
+        src/Object3D.h
+        src/objects/Cube.cpp
+        src/objects/Cube.h
+        src/objects/Sphere.cpp
+        src/objects/Sphere.h
+        src/objects/Cone.cpp
+        src/objects/Cone.h
+        src/Camera.cpp
+        src/Camera.h)
 
 if (LINUX)
     find_path(OPENGL_REGISTRY_INCLUDE_DIRS "GL/glcorearb.h")

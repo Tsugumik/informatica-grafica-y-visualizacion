@@ -15,24 +15,40 @@
 #endif   // defined(__APPLE__) && defined(__MACH__)
 
 #include <string>
+#include "src/objects/Cone.h"
+#include "src/objects/Cube.h"
+#include "src/objects/Sphere.h"
+#include "src/Camera.h"
 
 /**
  * Class to encapsulate the application's configuration and interface
  */
 class igvInterface {
 private:
+	Cube *cube;
+	Cone *cone;
+	Sphere *sphere;
+
+	Object3D *selectedObject;
+	int currentObject; // 0=none, 1=cube, 2=sphere, 3=cone
+	bool transformationMode; // true=RST, false=sequential
+
+	Camera* camera;
+	bool cameraMode;
+
+
 	// Atributos
 	int window_width = 0; ///< Initial width of the display window
 	int window_height = 0; ///< Initial height of the display window
 
 	// Application of the Singleton pattern
 	static igvInterface *_instance; ///< Pointer to the only object of the class
-	/// Default constructor
-	igvInterface() = default;
 
 public:
 	// Application of the Singleton pattern
 	static igvInterface &getInstance();
+
+	igvInterface();
 
 	/// Destroyer
 	~igvInterface() = default;
@@ -68,6 +84,8 @@ public:
 	void set_window_width(int _window_width);
 
 	void set_window_height(int _window_height);
+
+	void selectObject(int objectNum);
 };
 
 #endif   // __IGVINTERFACE

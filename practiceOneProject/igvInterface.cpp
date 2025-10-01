@@ -1,7 +1,6 @@
 #include <cstdlib>
 
 #include "igvInterface.h"
-
 #include <iostream>
 
 
@@ -20,6 +19,18 @@ igvInterface &igvInterface::getInstance() {
     }
 
     return *_instance;
+}
+
+igvInterface::igvInterface() {
+    cube = new Cube();
+    sphere = new Sphere();
+    cone = new Cone();
+    selectedObject = nullptr;
+    currentObject = 0;
+    transformationMode = true;
+
+    camera = new Camera();
+    cameraMode = false;
 }
 
 /**
@@ -52,7 +63,28 @@ void igvInterface::configure_environment(int argc, char **argv, int _window_widt
 
     glEnable(GL_DEPTH_TEST); // activates Z-buffer face culling
     glClearColor(1.0, 1.0, 1.0, 0.0); // sets the window background color
+
+    // ADD LIGHTING:
+    glEnable(GL_LIGHTING); // Enable lighting
+    glEnable(GL_LIGHT0); // Enable light source 0
+
+    // Set light position
+    GLfloat light_position[] = {2.0f, 2.0f, 2.0f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+    // Set light colors
+    GLfloat white_light[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    GLfloat ambient_light[] = {0.3f, 0.3f, 0.3f, 1.0f};
+
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
+
+    // Enable color material (so glColor3f works with lighting)
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 }
+
 
 /**
  * Method to display the scene and wait for events on the interface
@@ -74,119 +106,159 @@ void igvInterface::start_display_loop() {
  */
 void igvInterface::keyboardFunc(unsigned char key, int x, int y) {
     std::cout << "Key pressed: " << key << std::endl;
+
+    igvInterface *instance = &getInstance();
+
     switch (key) {
-        case 27: // Escape key to EXIT
-            exit(1);
+        case 27: exit(1);
 
-        // Object selection
-        case '1':
-            std::cout << "Selected Object 1" << std::endl;
-            break;
-        case '2':
-            std::cout << "Selected Object 2" << std::endl;
-            break;
-        case '3':
-            std::cout << "Selected Object 3" << std::endl;
-            break;
-
-        // Rotations
-        case 'x':
-            std::cout << "Rotation X+ (15 degrees)" << std::endl;
-            break;
-        case 'X':
-            std::cout << "Rotation X- (-15 degrees)" << std::endl;
-            break;
-        case 'y':
-            std::cout << "Rotation Y+ (15 degrees)" << std::endl;
-            break;
-        case 'Y':
-            std::cout << "Rotation Y- (-15 degrees)" << std::endl;
-            break;
-        case 'z':
-            std::cout << "Rotation Z+ (15 degrees)" << std::endl;
-            break;
-        case 'Z':
-            std::cout << "Rotation Z- (-15 degrees)" << std::endl;
-            break;
-
-        // Scaling
-        case 's':
-            std::cout << "Scale up (+10%)" << std::endl;
-            break;
-        case 'S':
-            std::cout << "Scale down (-10%)" << std::endl;
-            break;
-
-        // Y translation
-        case 'u':
-            std::cout << "Translation Y+ (+0.1)" << std::endl;
-            break;
-        case 'U':
-            std::cout << "Translation Y- (-0.1)" << std::endl;
-            break;
-
-        // Transformation mode toggle
-        case 'm':
-        case 'M':
-            std::cout << "Toggle transformation mode (RST <-> Sequential)" << std::endl;
-            break;
-
-        // Camera mode
         case 'c':
         case 'C':
-            std::cout << "Toggle camera mode" << std::endl;
+            instance->cameraMode = !instance->cameraMode;
+            std::cout << "Camera mode: " << (instance->cameraMode ? "ON" : "OFF") << std::endl;
             break;
 
-        // Camera clipping planes
-        case 'f':
-            std::cout << "Move front clipping plane forward" << std::endl;
+        case 'y':
+            if (instance->cameraMode) instance->camera->yaw(5.0f);
+            else if (instance->selectedObject) instance->selectedObject->rotate(0.0f, 15.0f, 0.0f);
             break;
-        case 'F':
-            std::cout << "Move front clipping plane backward" << std::endl;
-            break;
-        case 'b':
-            std::cout << "Move back clipping plane forward" << std::endl;
-            break;
-        case 'B':
-            std::cout << "Move back clipping plane backward" << std::endl;
+        case 'Y':
+            if (instance->cameraMode) instance->camera->yaw(-5.0f);
+            else if (instance->selectedObject) instance->selectedObject->rotate(0.0f, -15.0f, 0.0f);
             break;
 
         // Zoom
         case '+':
-            std::cout << "Zoom in" << std::endl;
+            instance->camera->zoom(-1.0f);  // Zoom in
             break;
         case '-':
-            std::cout << "Zoom out" << std::endl;
+            instance->camera->zoom(1.0f);   // Zoom out
             break;
 
-        // Projection toggle
+        // Clipping planes
+        case 'f':
+            instance->camera->moveNearPlane(-0.1f);
+            break;
+        case 'F':
+            instance->camera->moveNearPlane(0.1f);
+            break;
+        case 'b':
+            instance->camera->moveFarPlane(-1.0f);
+            break;
+        case 'B':
+            instance->camera->moveFarPlane(1.0f);
+            break;
+
+            // Projection toggle
         case 'p':
         case 'P':
-            std::cout << "Toggle projection (Perspective <-> Parallel)" << std::endl;
+            instance->camera->toggleProjection();
+            break;
+
+        // Object selection
+        case '1':
+            instance->selectObject(1);
+            break;
+        case '2':
+            instance->selectObject(2);
+            break;
+        case '3':
+            instance->selectObject(3);
+            break;
+
+        // Transformations - only if object is selected
+        case 'x':
+            if (instance->selectedObject) instance->selectedObject->rotate(15.0f, 0.0f, 0.0f);
+            break;
+        case 'X':
+            if (instance->selectedObject) instance->selectedObject->rotate(-15.0f, 0.0f, 0.0f);
+            break;
+        case 'z':
+            if (instance->selectedObject) instance->selectedObject->rotate(0.0f, 0.0f, 15.0f);
+            break;
+        case 'Z':
+            if (instance->selectedObject) instance->selectedObject->rotate(0.0f, 0.0f, -15.0f);
+            break;
+        case 's':
+            if (instance->selectedObject) instance->selectedObject->scale(1.1f, 1.1f, 1.1f);
+            break;
+        case 'S':
+            if (instance->selectedObject) instance->selectedObject->scale(0.9f, 0.9f, 0.9f);
+            break;
+        case 'u':
+            if (instance->selectedObject) instance->selectedObject->translate(0.0f, 0.1f, 0.0f);
+            break;
+        case 'U':
+            if (instance->selectedObject) instance->selectedObject->translate(0.0f, -0.1f, 0.0f);
+            break;
+        case 'm':
+        case 'M':
+            instance->transformationMode = !instance->transformationMode;
+
+            instance->cube->setRSTMode(instance->transformationMode);
+            instance->sphere->setRSTMode(instance->transformationMode);
+            instance->cone->setRSTMode(instance->transformationMode);
+
+            if (!instance->transformationMode) {
+                instance->cube->clearTransformationHistory();
+                instance->sphere->clearTransformationHistory();
+                instance->cone->clearTransformationHistory();
+            }
+
+            std::cout << "Transformation mode: " << (instance->transformationMode ? "RST" : "Sequential") << std::endl;
+
+            break;
+        case 'r':
+        case 'R':
+            if (instance->selectedObject) {
+                instance->selectedObject->resetTransformations();
+                instance->selectedObject->clearTransformationHistory();
+                std::cout << "Object transformations reset" << std::endl;
+            }
             break;
     }
     glutPostRedisplay(); // refreshes the contents of the view window
 }
 
 void igvInterface::specialKeyboardFunc(int key, int x, int y) {
-    std::cout << "Special key pressed: " << key << std::endl;
-    switch(key)
-    {
-        case GLUT_KEY_LEFT:
-            std::cout << "Translation X- (-0.1)" << std::endl;
-            break;
-        case GLUT_KEY_RIGHT:
-            std::cout << "Translation X+ (+0.1)" << std::endl;
-            break;
-        case GLUT_KEY_UP:
-            std::cout << "Translation Z+ (+0.1)" << std::endl;
-            break;
-        case GLUT_KEY_DOWN:
-            std::cout << "Translation Z- (-0.1)" << std::endl;
-            break;
+    igvInterface* instance = &getInstance();
+
+    if (instance->cameraMode) {
+        // Camera controls
+        switch (key) {
+            case GLUT_KEY_LEFT:
+                instance->camera->orbit(-5.0f, 0.0f);
+                break;
+            case GLUT_KEY_RIGHT:
+                instance->camera->orbit(5.0f, 0.0f);
+                break;
+            case GLUT_KEY_UP:
+                instance->camera->orbit(0.0f, 5.0f);
+                break;
+            case GLUT_KEY_DOWN:
+                instance->camera->orbit(0.0f, -5.0f);
+                break;
+        }
+    } else {
+        // Object transformations
+        switch (key) {
+            case GLUT_KEY_LEFT:
+                if (instance->selectedObject) instance->selectedObject->translate(-0.1f, 0.0f, 0.0f);
+                break;
+            case GLUT_KEY_RIGHT:
+                if (instance->selectedObject) instance->selectedObject->translate(0.1f, 0.0f, 0.0f);
+                break;
+            case GLUT_KEY_UP:
+                if (instance->selectedObject) instance->selectedObject->translate(0.0f, 0.0f, 0.1f);
+                break;
+            case GLUT_KEY_DOWN:
+                if (instance->selectedObject) instance->selectedObject->translate(0.0f, 0.0f, -0.1f);
+                break;
+        }
     }
     glutPostRedisplay();
 }
+
 
 /**
  * Method that defines the camera and viewport. It is called automatically
@@ -196,65 +268,52 @@ void igvInterface::specialKeyboardFunc(int key, int x, int y) {
  * @pre All parameters are assumed to have valid values
  */
 void igvInterface::reshapeFunc(int w, int h) {
-    // resize the viewport to the new window width and height
     glViewport(0, 0, (GLsizei) w, (GLsizei) h);
 
-    // we save new values from the display window
     _instance->set_window_width(w);
     _instance->set_window_height(h);
 
-    // sets the type of projection to use
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    glOrtho(-1, 1, -1, 1, -1, 200);
-
-    // the vision camera is defined
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    gluLookAt(1.5, 1.0, 2.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    // Use camera for projection
+    _instance->camera->setAspectRatio((float)w / (float)h);
+    _instance->camera->applyProjection();
+    _instance->camera->applyView();
 }
+
 
 /**
  * Method for displaying the scene
  */
 void igvInterface::displayFunc() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clears the window and the Z-buffer
-    glPushMatrix(); // saves the modeling matrix
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // TODO: Section A: paint the axes
+    // Apply camera transformations
+    igvInterface* instance = &getInstance();
+    instance->camera->applyProjection();
+    instance->camera->applyView();
 
+    glPushMatrix();
+
+    // Draw axes
+    glDisable(GL_LIGHTING);
+    glLineWidth(2.0f);
     glBegin(GL_LINES);
-
-    // X AXIS (RED)
-    glColor3f(1.0, 0.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(1.0, 0.0, 0.0);
-
-    // Y AXIS (GREEN)
-    glColor3f(0.0, 1.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(0.0, 1.0, 0.0);
-
-
-    // Z AXIS (BLUE)
-    glColor3f(0.0, 0.0, 1.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(0.0, 0.0, 1.0);
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(-2.0f, 0.0f, 0.0f); glVertex3f(2.0f, 0.0f, 0.0f);
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, -2.0f, 0.0f); glVertex3f(0.0f, 2.0f, 0.0f);
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(0.0f, 0.0f, -2.0f); glVertex3f(0.0f, 0.0f, 2.0f);
     glEnd();
+    glLineWidth(1.0f);
+    glEnable(GL_LIGHTING);
 
+    // Draw only selected object
+    if (instance->selectedObject) {
+        instance->selectedObject->draw();
+    }
 
-    // TODO: Section B: display primitive cube in wireframe mode
-
-    glColor3f(0.0, 0.0, 0.0);
-    glutWireCube(0.5);
-
-    // TODO: Section C
-    // TODO: Section D: upper face with triangles
-
-
-    glPopMatrix(); // restores the modeling matrix
-    glutSwapBuffers(); // used instead of glFlush() to prevent flickering
+    glPopMatrix();
+    glutSwapBuffers();
 }
 
 /**
@@ -301,4 +360,36 @@ void igvInterface::set_window_width(int _window_width) {
  */
 void igvInterface::set_window_height(int _window_height) {
     window_height = _window_height;
+}
+
+void igvInterface::selectObject(int objectNum) {
+    // Deselect all
+    cube->setSelected(false);
+    sphere->setSelected(false);
+    cone->setSelected(false);
+
+    // Select requested object
+    switch (objectNum) {
+        case 1:
+            selectedObject = cube;
+            cube->setSelected(true);
+            cube->setRSTMode(transformationMode);
+            currentObject = 1;
+            std::cout << "Selected cube" << std::endl;
+            break;
+        case 2:
+            selectedObject = sphere;
+            sphere->setSelected(true);
+            sphere->setRSTMode(transformationMode);
+            currentObject = 2;
+            std::cout << "Selected sphere" << std::endl;
+            break;
+        case 3:
+            selectedObject = cone;
+            cone->setSelected(true);
+            cone->setRSTMode(transformationMode);
+            currentObject = 3;
+            std::cout << "Selected cone" << std::endl;
+            break;
+    }
 }
