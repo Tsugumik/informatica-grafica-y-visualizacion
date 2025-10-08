@@ -58,6 +58,7 @@ void Camera::zoom(float delta) {
     std::cout << "Zoom - FOV: " << fov << ", Radius: " << orbitRadius << std::endl;
 }
 
+/*
 void Camera::moveNearPlane(float delta) {
     nearPlane += delta * 0.1f;
     if (nearPlane < 0.01f) nearPlane = 0.01f;
@@ -67,6 +68,20 @@ void Camera::moveNearPlane(float delta) {
 
 void Camera::moveFarPlane(float delta) {
     farPlane += delta;
+    if (farPlane <= nearPlane) farPlane = nearPlane + 0.1f;
+    if (farPlane > 1000.0f) farPlane = 1000.0f;
+    std::cout << "Far plane: " << farPlane << std::endl;
+}*/
+
+void Camera::moveNearPlane(float delta) {
+    nearPlane += delta * 1.0f;
+    if (nearPlane < 0.01f) nearPlane = 0.01f;
+    if (nearPlane >= farPlane) nearPlane = farPlane - 0.1f;
+    std::cout << "Near plane: " << nearPlane << std::endl;
+}
+
+void Camera::moveFarPlane(float delta) {
+    farPlane += delta * 1.0f;
     if (farPlane <= nearPlane) farPlane = nearPlane + 0.1f;
     if (farPlane > 1000.0f) farPlane = 1000.0f;
     std::cout << "Far plane: " << farPlane << std::endl;

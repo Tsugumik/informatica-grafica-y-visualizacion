@@ -298,11 +298,11 @@ void igvInterface::displayFunc() {
     glLineWidth(2.0f);
     glBegin(GL_LINES);
     glColor3f(1.0f, 0.0f, 0.0f);
-    glVertex3f(-2.0f, 0.0f, 0.0f); glVertex3f(2.0f, 0.0f, 0.0f);
+    glVertex3f(-8.0f, 0.0f, 0.0f); glVertex3f(8.0f, 0.0f, 0.0f);
     glColor3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(0.0f, -2.0f, 0.0f); glVertex3f(0.0f, 2.0f, 0.0f);
+    glVertex3f(0.0f, -8.0f, 0.0f); glVertex3f(0.0f, 8.0f, 0.0f);
     glColor3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(0.0f, 0.0f, -2.0f); glVertex3f(0.0f, 0.0f, 2.0f);
+    glVertex3f(0.0f, 0.0f, -8.0f); glVertex3f(0.0f, 0.0f, 8.0f);
     glEnd();
     glLineWidth(1.0f);
     glEnable(GL_LIGHTING);
