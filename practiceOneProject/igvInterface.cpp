@@ -185,12 +185,6 @@ void igvInterface::keyboardFunc(unsigned char key, int x, int y) {
         case 'S':
             if (instance->selectedObject) instance->selectedObject->scale(0.9f, 0.9f, 0.9f);
             break;
-        case 'u':
-            if (instance->selectedObject) instance->selectedObject->translate(0.0f, 0.1f, 0.0f);
-            break;
-        case 'U':
-            if (instance->selectedObject) instance->selectedObject->translate(0.0f, -0.1f, 0.0f);
-            break;
         case 'm':
         case 'M':
             instance->transformationMode = !instance->transformationMode;

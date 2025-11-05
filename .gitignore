@@ -2,3 +2,5 @@
 */cmake-build*
 .DS_Store
 */.DS_Store
+*/*.zip
+*/*.pdf
