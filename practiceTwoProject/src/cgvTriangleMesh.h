@@ -1,50 +1,40 @@
-#ifndef __IGVMALLATRIANGULOS
-#define __IGVMALLATRIANGULOS
+#ifndef __CGV_TRIANGLE_MESH_H
+#define __CGV_TRIANGLE_MESH_H
 
-#if defined(__APPLE__) && defined(__MACH__)
-#include <GLUT/glut.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
-#else
+#include <vector>
+#include "cgvPoint3D.h"
+#include "Object3D.h"
 
-#include <GL/glut.h>
-
-#endif   // defined(__APPLE__) && defined(__MACH__)
-
-#include <string>
-
-/**
- * Objects of this class represent triangle meshes.
- */
-class cgvTriangleMesh
-{
-protected:
-    // Attributes
-    long int num_vertices = 0; ///< Number of vertices in the triangle mesh
-    float* vertices = nullptr; ///< Array with the (num_vertices * 3) coordinates of the vertices
-    float* normals = nullptr;
-    ///< Array with the (num_vertices * 3) coordinates of the normal at each vertex (only for sphere generation)
-
-    long int num_triangles = 0; ///< Number of triangles in the triangle mesh
-    unsigned int* triangles = nullptr; ///< Array with the (num_triangles * 3) indices to the vertices of each triangle
-    bool usenormals;
-    bool gouraud;
-
+class cgvTriangle {
 public:
-    // Constructor and destructor
-    /// Default constructor
-    cgvTriangleMesh() = default;
-
-    cgvTriangleMesh(long int _num_vertices, float* _vertices
-                       , long int _num_triangles, unsigned int* _triangles);
-
-    ~cgvTriangleMesh();
-
-    // Method with OpenGL calls to display the triangle mesh
-    void display();
-
-    void changeNormals() { usenormals = !usenormals; }
-    void changeVis() { gouraud = !gouraud; }
+    unsigned int v[3];
+    cgvTriangle(unsigned int v0, unsigned int v1, unsigned int v2) {
+        v[0] = v0; v[1] = v1; v[2] = v2;
+    }
 };
 
-#endif   // __IGVMALLATRIANGULOS
+class cgvTriangleMesh : public Object3D {
+protected:
+    std::vector<cgvPoint3D> vertices;
+    std::vector<cgvPoint3D> normals;
+    std::vector<cgvTriangle> triangles;
+
+    float specular_reflectivity = 0.5f;
+    float shininess = 10.0f;
+
+public:
+    cgvTriangleMesh() = default;
+    ~cgvTriangleMesh() = default;
+
+    void draw() override;
+    void compute_normals();
+
+    std::vector<cgvPoint3D>& get_vertices() { return vertices; }
+    std::vector<cgvPoint3D>& get_normals() { return normals; }
+    std::vector<cgvTriangle>& get_triangles() { return triangles; }
+
+    void set_specular_reflectivity(float reflectivity) { specular_reflectivity = reflectivity; }
+    void set_shininess(float s) { shininess = s; }
+};
+
+#endif

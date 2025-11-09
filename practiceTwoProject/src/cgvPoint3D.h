@@ -3,80 +3,43 @@
 
 #if defined(__APPLE__) && defined(__MACH__)
 #include <GLUT/glut.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
 #else
-
 #include <GL/glut.h>
+#endif
 
-#endif   // defined(__APPLE__) && defined(__MACH__)
+#include <cmath>
 
-#define IGV_EPSILON 0.000001 ///< Constante para comparaciones con 0
+#define IGV_EPSILON 0.000001
 
 #ifndef __ENUM_XYZ
 #define __ENUM_XYZ
+enum Coordinates { X, Y, Z };
+#endif
 
-/**
- * Labels for point/vector coordinates
- */
-enum Coordinates
-{  X   ///< X coordinate
-   , Y   ///< Y coordinate
-   , Z   ///< Z coordinate
-};
-#endif   // __ENUM_XYZ
-
-/**
- * Objects of this class represent points and vectors in 3D
- */
-class cgvPoint3D
-{  private:
-    double c[3] = {0,0,0}; ///< x, y, z components of the point or vector
+class cgvPoint3D {
+private:
+    GLfloat c[3] = {0,0,0};
 
 public:
-    // Constructors
-    /// Default constructor
-    cgvPoint3D () = default;
-    cgvPoint3D ( const double &x, const double &y, const double &z );
-    // Copy constructor
-    cgvPoint3D ( const cgvPoint3D &p );
+    cgvPoint3D() = default;
+    cgvPoint3D(const GLfloat& x, const GLfloat& y, const GLfloat& z);
+    cgvPoint3D(const cgvPoint3D& p);
+    ~cgvPoint3D() = default;
 
-    // Assignment operator
-    cgvPoint3D &operator= ( const cgvPoint3D &p );
+    cgvPoint3D& operator=(const cgvPoint3D& p);
+    GLfloat& operator[](unsigned char idx);
+    GLfloat operator[](unsigned char idx) const;
 
-    /// Destructor
-    ~cgvPoint3D () = default;
+    cgvPoint3D operator+(const cgvPoint3D& p) const;
+    cgvPoint3D& operator+=(const cgvPoint3D& p);
+    cgvPoint3D operator-(const cgvPoint3D& p) const;
 
-    // Operators
-    double &operator[] ( const unsigned char idx );
-
-    double operator[] ( const unsigned char idx ) const;
-
-    bool operator== ( const cgvPoint3D &p );
-
-    bool operator!= ( const cgvPoint3D &p );
-
-    void set ( const double &x, const double &y, const double &z );
+    cgvPoint3D cross(const cgvPoint3D& p) const;
+    void normalize();
+    GLfloat length() const;
 };
 
-/**
- * Access to a point/vector coordinate
- * @param idx Coordinate to be accessed (0, 1 or 2)
- * @return The corresponding coordinate
- * @pre It is assumed that the parameter value is correct
- */
-inline double &cgvPoint3D::operator[] ( const unsigned char idx )
-{  return c[idx];
-}
+inline GLfloat& cgvPoint3D::operator[](unsigned char idx) { return c[idx]; }
+inline GLfloat cgvPoint3D::operator[](unsigned char idx) const { return c[idx]; }
 
-/**
- * Access to a point/vector coordinate
- * @param idx Coordinate to be accessed (0, 1, or 2)
- * @return The corresponding coordinate
- * @pre It is assumed that the parameter value is correct
- */
-inline double cgvPoint3D::operator[] ( const unsigned char idx ) const
-{  return c[idx];
-}
-#endif   // __CGVPOINT3D
-
+#endif

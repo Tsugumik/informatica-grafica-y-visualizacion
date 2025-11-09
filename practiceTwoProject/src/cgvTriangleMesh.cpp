@@ -1,95 +1,62 @@
-#include <cstdlib>
-#include <stdio.h>
-#include <math.h>
 #include "cgvTriangleMesh.h"
 
-/**
- * Parameterised constructor of a triangle mesh without normals at the
- * vertices
- * @param _num_vertices Number of vertices in the new mesh
- * @param _vertices Memory address where the
- *        coordinates (X,Y,Z format) of the vertices are stored. This information is
- *        copied to the new mesh
- * @param _num_triangles Number of triangles that form the mesh
- * @param _triangles Indices (v1, v2, v3 format) to the vertices that form
- *        each triangle. This information is copied to the new object
- * @pre It is assumed that all parameters have valid values
- * @post The new mesh will store copies of the information passed to it as a
- *       parameter
- */
-cgvTriangleMesh::cgvTriangleMesh(long int _num_vertex, float* _vertex
-                                       , long int _num_triangles
-                                       , unsigned int* _triangles) :
-    num_vertices(_num_vertex)
-    , num_triangles(_num_triangles)
-{
-    num_vertices = _num_vertex;
-    vertices = new float[num_vertices * 3];
-    for (long int i = 0; i < (num_vertices * 3); ++i)
-    {
-        vertices[i] = _vertex[i];
-    }
+#if defined(__APPLE__) && defined(__MACH__)
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
 
-    normals = nullptr;
+void cgvTriangleMesh::draw() {
+    glPushMatrix();
+    applyTransformations();
 
-    num_triangles = _num_triangles;
-    _triangles = new unsigned int[num_triangles * 3];
-    for (long int i = 0; i < (num_triangles * 3); ++i)
-    {
-        triangles[i] = _triangles[i];
-    }
-}
-
-/**
- * Destructor
- */
-cgvTriangleMesh::~cgvTriangleMesh()
-{
-    if (vertices)
-    {
-        delete []vertices;
-        vertices = nullptr;
-    }
-
-    if (normals)
-    {
-        delete []normals;
-        normals = nullptr;
-    }
-
-    if (triangles)
-    {
-        delete []triangles;
-        triangles = nullptr;
-    }
-}
-
-/**
- * Method with OpenGL calls to display the triangle mesh
- */
-void cgvTriangleMesh::display()
-{
-    if (!gouraud)
-    {
-        glShadeModel(GL_FLAT);
-    }
-    else
-    {
-        glShadeModel(GL_SMOOTH);
-    }
-
-    glEnable(GL_NORMALIZE);
+    GLfloat specular[] = { specular_reflectivity, specular_reflectivity, specular_reflectivity, 1.0f };
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+    glMaterialf(GL_FRONT, GL_SHININESS, shininess);
+    glColor3f(0.6f, 0.6f, 0.8f);
 
     glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, vertices);
+    glEnableClientState(GL_NORMAL_ARRAY);
 
-    if (usenormals)
-    {
-        glEnableClientState(GL_NORMAL_ARRAY);
-        glNormalPointer(GL_FLOAT, 0, normals);
-    }
+    glVertexPointer(3, GL_FLOAT, 0, vertices.data());
+    #if defined(__APPLE__) && defined(__MACH__)
+    glNormalPointer(GL_FLOAT, 0, normals.data());
+    #else
+    glNormalPointer(3, GL_FLOAT, 0, normals.data());
+    #endif
 
-    glDrawElements(GL_TRIANGLES, num_triangles * 3, GL_UNSIGNED_INT, triangles);
+    glDrawElements(GL_TRIANGLES, triangles.size() * 3, GL_UNSIGNED_INT, triangles.data());
+
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
+
+    GLfloat default_specular[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    glMaterialfv(GL_FRONT, GL_SPECULAR, default_specular);
+    glMaterialf(GL_FRONT, GL_SHININESS, 0.0f);
+
+    glPopMatrix();
+}
+
+void cgvTriangleMesh::compute_normals() {
+    if (vertices.empty() || triangles.empty()) return;
+
+    normals.assign(vertices.size(), cgvPoint3D(0, 0, 0));
+
+    for (const auto& tri : triangles) {
+        cgvPoint3D v0 = vertices[tri.v[0]];
+        cgvPoint3D v1 = vertices[tri.v[1]];
+        cgvPoint3D v2 = vertices[tri.v[2]];
+
+        cgvPoint3D edge1 = v1 - v0;
+        cgvPoint3D edge2 = v2 - v0;
+        cgvPoint3D normal = edge1.cross(edge2);
+        
+        normals[tri.v[0]] += normal;
+        normals[tri.v[1]] += normal;
+        normals[tri.v[2]] += normal;
+    }
+
+    for (auto& normal : normals) {
+        normal.normalize();
+    }
 }

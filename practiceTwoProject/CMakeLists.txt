@@ -11,43 +11,23 @@ add_executable(${PROJECT_NAME}
         pr1.cpp
         src/Object3D.cpp
         src/Object3D.h
-        src/objects/Cube.cpp
-        src/objects/Cube.h
-        src/objects/Sphere.cpp
-        src/objects/Sphere.h
-        src/objects/Cone.cpp
-        src/objects/Cone.h
         src/Camera.cpp
-        src/Camera.h)
-
-if (LINUX)
-    find_path(OPENGL_REGISTRY_INCLUDE_DIRS "GL/glcorearb.h")
-    target_include_directories(${PROJECT_NAME} PRIVATE ${OPENGL_REGISTRY_INCLUDE_DIRS})
-
-    find_package(OpenGL REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
-    target_include_directories(${PROJECT_NAME} PRIVATE ${OPENGL_INCLUDE_DIR})
-
-    find_package(GLUT REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE GLUT::GLUT)
-endif ()
-
-if (WIN32)
-    find_package(opengl_system)
-    target_link_libraries(${PROJECT_NAME} opengl::opengl)
-
-    find_package(opengl-registry)
-    target_link_libraries(${PROJECT_NAME} opengl-registry::opengl-registry)
-
-    find_package(FreeGLUT)
-    target_link_libraries(${PROJECT_NAME} FreeGLUT::freeglut_static)
-endif ()
+        src/Camera.h
+        src/cgvTriangleMesh.cpp
+        src/cgvTriangleMesh.h
+        ArticulatedModel.cpp
+        ArticulatedModel.h
+        src/AdvancedOBJLoader.cpp
+        src/AdvancedOBJLoader.h
+        src/cgvPoint3D.cpp
+        src/cgvPoint3D.h
+        )
 
 if (APPLE)
-    # Enlazar frameworks de macOS
     target_link_libraries(pr1 PRIVATE "-framework OpenGL" "-framework GLUT")
-    # Silencia warnings por deprecación (opcional)
     target_compile_definitions(pr1 PRIVATE GL_SILENCE_DEPRECATION)
 else ()
-    target_link_libraries(pr1 PRIVATE OpenGL::GL)
+    find_package(OpenGL REQUIRED)
+    find_package(GLUT REQUIRED)
+    target_link_libraries(pr1 PRIVATE ${OPENGL_LIBRARIES} GLUT::GLUT)
 endif ()
