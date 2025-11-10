@@ -1,6 +1,10 @@
 #include "Camera.h"
 #include <iostream>
+#ifdef __APPLE__
 #include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
 #include <cmath>
 
 Camera::Camera() {

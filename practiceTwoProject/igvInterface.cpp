@@ -90,18 +90,20 @@ void igvInterface::keyboardFunc(unsigned char key, int x, int y) {
         case 27: exit(0);
         case 'c': case 'C': i->cameraMode = !i->cameraMode; break;
         case 'p': case 'P': i->camera->toggleProjection(); break;
+        case '=': //support keys with/without shift too
         case '+': i->camera->zoom(-1.0f); break;
+        case '_':
         case '-': i->camera->zoom(1.0f); break;
         case '1': i->selectObject(1); break;
         case '2': i->selectObject(2); break;
-        case 'x': if(i->selectedObject) i->selectedObject->rotate(15.0f, 0.0f, 0.0f); break;
-        case 'X': if(i->selectedObject) i->selectedObject->rotate(-15.0f, 0.0f, 0.0f); break;
-        case 'y': if(i->selectedObject) i->selectedObject->rotate(0.0f, 15.0f, 0.0f); break;
-        case 'Y': if(i->selectedObject) i->selectedObject->rotate(0.0f, -15.0f, 0.0f); break;
-        case 'z': if(i->selectedObject) i->selectedObject->rotate(0.0f, 0.0f, 15.0f); break;
-        case 'Z': if(i->selectedObject) i->selectedObject->rotate(0.0f, 0.0f, -15.0f); break;
-        case 's': if(i->selectedObject) i->selectedObject->scale(1.1f, 1.1f, 1.1f); break;
-        case 'S': if(i->selectedObject) i->selectedObject->scale(0.9f, 0.9f, 0.9f); break;
+        case 'X': if(i->selectedObject) i->selectedObject->rotate(15.0f, 0.0f, 0.0f); break;
+        case 'x': if(i->selectedObject) i->selectedObject->rotate(-15.0f, 0.0f, 0.0f); break;
+        case 'Y': if(i->selectedObject) i->selectedObject->rotate(0.0f, 15.0f, 0.0f); break;
+        case 'y': if(i->selectedObject) i->selectedObject->rotate(0.0f, -15.0f, 0.0f); break;
+        case 'Z': if(i->selectedObject) i->selectedObject->rotate(0.0f, 0.0f, 15.0f); break;
+        case 'z': if(i->selectedObject) i->selectedObject->rotate(0.0f, 0.0f, -15.0f); break;
+        case 'S': if(i->selectedObject) i->selectedObject->scale(1.1f, 1.1f, 1.1f); break;
+        case 's': if(i->selectedObject) i->selectedObject->scale(0.9f, 0.9f, 0.9f); break;
         case '4': if (i->currentObject == 2) i->articulatedModel->prev_dof(); break;
         case '5': if (i->currentObject == 2) i->articulatedModel->next_dof(); break;
         case 'a': case 'A': i->toggleAnimateModel(); break;

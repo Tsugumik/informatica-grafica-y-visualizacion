@@ -19,11 +19,7 @@ void cgvTriangleMesh::draw() {
     glEnableClientState(GL_NORMAL_ARRAY);
 
     glVertexPointer(3, GL_FLOAT, 0, vertices.data());
-    #if defined(__APPLE__) && defined(__MACH__)
     glNormalPointer(GL_FLOAT, 0, normals.data());
-    #else
-    glNormalPointer(3, GL_FLOAT, 0, normals.data());
-    #endif
 
     glDrawElements(GL_TRIANGLES, triangles.size() * 3, GL_UNSIGNED_INT, triangles.data());
 

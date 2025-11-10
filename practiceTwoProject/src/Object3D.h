@@ -6,7 +6,12 @@
 #define PR1_OBJECT3D_H
 
 #include <iostream>
+#include <vector>
+#ifdef __APPLE__
 #include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
 
 enum TransformationType {
     TRANSLATE_OP,
