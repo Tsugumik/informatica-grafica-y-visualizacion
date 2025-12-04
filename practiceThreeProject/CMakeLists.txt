@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(pr1)
+project(pr3)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -34,10 +34,10 @@ add_executable(${PROJECT_NAME}
         )
 
 if (APPLE)
-    target_link_libraries(pr1 PRIVATE "-framework OpenGL" "-framework GLUT")
-    target_compile_definitions(pr1 PRIVATE GL_SILENCE_DEPRECATION)
+    target_link_libraries(pr3 PRIVATE "-framework OpenGL" "-framework GLUT")
+    target_compile_definitions(pr3 PRIVATE GL_SILENCE_DEPRECATION)
 else ()
     find_package(OpenGL REQUIRED)
     find_package(GLUT REQUIRED)
-    target_link_libraries(pr1 PRIVATE ${OPENGL_LIBRARIES} GLUT::GLUT)
+    target_link_libraries(pr3 PRIVATE ${OPENGL_LIBRARIES} GLUT::GLUT)
 endif ()
