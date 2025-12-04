@@ -1,7 +1,3 @@
-//
-// Created by Błażej Drozd on 27/09/2025.
-//
-
 #ifndef PR1_OBJECT3D_H
 #define PR1_OBJECT3D_H
 
@@ -28,7 +24,7 @@ struct TransformationStep {
 };
 
 class Object3D {
-private:
+protected: // Changed to protected to allow access in derived classes if needed
     float translateX, translateY, translateZ;
     float rotateX, rotateY, rotateZ;
     float scaleX, scaleY, scaleZ;
@@ -45,12 +41,16 @@ public:
 
     // Transformation methods
     void translate(float dx, float dy, float dz);
-
     void rotate(float rx, float ry, float rz);
-
     void scale(float sx, float sy, float sz);
-
     void resetTransformations();
+
+    // Getters for position
+    void getPosition(float& x, float& y, float& z) const {
+        x = translateX;
+        y = translateY;
+        z = translateZ;
+    }
 
     // Selection
     void setSelected(bool selected) { isSelected = selected; }

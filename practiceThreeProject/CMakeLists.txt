@@ -21,6 +21,16 @@ add_executable(${PROJECT_NAME}
         src/AdvancedOBJLoader.h
         src/cgvPoint3D.cpp
         src/cgvPoint3D.h
+        src/Material.cpp
+        src/Material.h
+        src/Floor.cpp
+        src/Floor.h
+        src/Texture.cpp
+        src/Texture.h
+        src/Light.cpp
+        src/Light.h
+        src/lodepng.cpp
+        src/lodepng.h
         )
 
 if (APPLE)

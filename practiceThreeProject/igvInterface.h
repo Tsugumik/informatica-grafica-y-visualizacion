@@ -8,14 +8,22 @@
 #endif
 
 #include <string>
+#include <vector>
+#include <memory>
 #include "src/Camera.h"
 #include "src/cgvTriangleMesh.h"
 #include "ArticulatedModel.h"
+#include "src/Floor.h"
+#include "src/Light.h"
 
 class igvInterface {
 private:
     cgvTriangleMesh* triangleMesh;
     ArticulatedModel* articulatedModel;
+    Floor* floor;
+    
+    std::vector<std::unique_ptr<Light>> lights;
+    int selectedLight;
 
     Object3D* selectedObject;
     int currentObject;
@@ -27,13 +35,17 @@ private:
     bool articulatedInteractionKeyboard;
     bool animateCamera;
     bool animateModel;
+    bool textureEnabled;
+    bool globalAmbientLightOn;
 
     int window_width = 0;
     int window_height = 0;
 
     static igvInterface* _instance;
 
-    void process_selection(); // Corrected declaration
+    void process_selection();
+    void setupLights();
+    void initGLResources(); // New method
 
 public:
     static igvInterface& getInstance();
@@ -55,11 +67,18 @@ public:
 
     void selectObject(int objectNum);
 
-    // Public setters for menu callbacks
+    // Menu callbacks
     void setShading(bool flat);
     void setInteraction(bool keyboard);
     void toggleAnimateModel();
     void toggleAnimateCamera();
+    void setFloorMaterial(int materialIndex);
+    void toggleTexture();
+    void setFloorTexture(int textureIndex);
+    void setTextureFilter(int filterType);
+    void toggleLight(int lightIndex);
+    void selectLight(int lightIndex);
+    void moveSelectedLight(float dx, float dy, float dz);
 
     int get_window_width();
     int get_window_height();
