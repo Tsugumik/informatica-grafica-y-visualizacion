@@ -8,20 +8,14 @@
 #endif
 
 #include <string>
-#include <vector>
 #include "src/Camera.h"
 #include "src/cgvTriangleMesh.h"
 #include "ArticulatedModel.h"
-#include "src/Quad.h"
-#include "src/cgvLightSource.h"
-#include "src/cgvMaterial.h"
-#include "src/cgvTexture.h"
 
 class igvInterface {
 private:
     cgvTriangleMesh* triangleMesh;
     ArticulatedModel* articulatedModel;
-    Quad* floor;
 
     Object3D* selectedObject;
     int currentObject;
@@ -34,25 +28,12 @@ private:
     bool animateCamera;
     bool animateModel;
 
-    // Practice 3 additions
-    std::vector<cgvMaterial> floorMaterials;
-    int currentFloorMaterial;
-
-    std::vector<cgvTexture> textures;
-    int currentTexture;
-    bool texturingEnabled;
-
-    cgvLightSource lights[4];
-    int selectedLight;
-    bool globalAmbientOn;
-
     int window_width = 0;
     int window_height = 0;
 
     static igvInterface* _instance;
 
-    void process_selection();
-    void initScene(); // New private method
+    void process_selection(); // Corrected declaration
 
 public:
     static igvInterface& getInstance();
@@ -79,13 +60,6 @@ public:
     void setInteraction(bool keyboard);
     void toggleAnimateModel();
     void toggleAnimateCamera();
-    void setFloorMaterial(int materialIndex);
-    void toggleTexturing();
-    void setTexture(int textureIndex);
-    void setTextureFilter(int filterMode);
-    void toggleLight(int lightIndex);
-    void selectLight(int lightIndex);
-
 
     int get_window_width();
     int get_window_height();

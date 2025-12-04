@@ -4,8 +4,6 @@
 #include <vector>
 #include "cgvPoint3D.h"
 #include "Object3D.h"
-#include "cgvMaterial.h"
-#include "cgvTexture.h"
 
 class cgvTriangle {
 public:
@@ -19,11 +17,10 @@ class cgvTriangleMesh : public Object3D {
 protected:
     std::vector<cgvPoint3D> vertices;
     std::vector<cgvPoint3D> normals;
-    std::vector<cgvPoint3D> tex_coords;
     std::vector<cgvTriangle> triangles;
 
-    cgvMaterial* material = nullptr;
-    cgvTexture* texture = nullptr;
+    float specular_reflectivity = 0.5f;
+    float shininess = 10.0f;
 
 public:
     cgvTriangleMesh() = default;
@@ -34,11 +31,10 @@ public:
 
     std::vector<cgvPoint3D>& get_vertices() { return vertices; }
     std::vector<cgvPoint3D>& get_normals() { return normals; }
-    std::vector<cgvPoint3D>& get_tex_coords() { return tex_coords; }
     std::vector<cgvTriangle>& get_triangles() { return triangles; }
 
-    void set_material(cgvMaterial* mat) { material = mat; }
-    void set_texture(cgvTexture* tex) { texture = tex; }
+    void set_specular_reflectivity(float reflectivity) { specular_reflectivity = reflectivity; }
+    void set_shininess(float s) { shininess = s; }
 };
 
 #endif

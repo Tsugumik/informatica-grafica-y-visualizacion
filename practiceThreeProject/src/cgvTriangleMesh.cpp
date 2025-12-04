@@ -10,36 +10,25 @@ void cgvTriangleMesh::draw() {
     glPushMatrix();
     applyTransformations();
 
-    if (material) {
-        material->apply();
-    }
-
-    bool hasTexture = texture && !tex_coords.empty();
-
-    if (hasTexture) {
-        glEnable(GL_TEXTURE_2D);
-        texture->apply();
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        // The stride is the size of the full cgvPoint3D struct, as our data is stored as an array of these structs.
-        glTexCoordPointer(3, GL_FLOAT, sizeof(cgvPoint3D), (const GLvoid*)tex_coords.data());
-    }
+    GLfloat specular[] = { specular_reflectivity, specular_reflectivity, specular_reflectivity, 1.0f };
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+    glMaterialf(GL_FRONT, GL_SHININESS, shininess);
+    glColor3f(0.6f, 0.6f, 0.8f);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
 
-    // The stride is the size of the full cgvPoint3D struct.
-    glVertexPointer(3, GL_FLOAT, sizeof(cgvPoint3D), (const GLvoid*)vertices.data());
-    glNormalPointer(GL_FLOAT, sizeof(cgvPoint3D), (const GLvoid*)normals.data());
+    glVertexPointer(3, GL_FLOAT, 0, vertices.data());
+    glNormalPointer(GL_FLOAT, 0, normals.data());
 
-    glDrawElements(GL_TRIANGLES, triangles.size() * 3, GL_UNSIGNED_INT, (const GLvoid*)triangles.data());
+    glDrawElements(GL_TRIANGLES, triangles.size() * 3, GL_UNSIGNED_INT, triangles.data());
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
 
-    if (hasTexture) {
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        glDisable(GL_TEXTURE_2D);
-    }
+    GLfloat default_specular[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    glMaterialfv(GL_FRONT, GL_SPECULAR, default_specular);
+    glMaterialf(GL_FRONT, GL_SHININESS, 0.0f);
 
     glPopMatrix();
 }
@@ -47,7 +36,7 @@ void cgvTriangleMesh::draw() {
 void cgvTriangleMesh::compute_normals() {
     if (vertices.empty() || triangles.empty()) return;
 
-    normals.assign(vertices.size(), cgvPoint3D(0, 0, 0, 0));
+    normals.assign(vertices.size(), cgvPoint3D(0, 0, 0));
 
     for (const auto& tri : triangles) {
         cgvPoint3D v0 = vertices[tri.v[0]];
