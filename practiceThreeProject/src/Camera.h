@@ -1,7 +1,3 @@
-//
-// Created by Błażej Drozd on 01/10/2025.
-//
-
 #ifndef PR1_CAMERA_H
 #define PR1_CAMERA_H
 

@@ -1,7 +1,3 @@
-//
-// Created by Błażej Drozd on 27/09/2025.
-//
-
 #include "Object3D.h"
 
 Object3D::Object3D() {
@@ -60,7 +56,6 @@ void Object3D::resetTransformations() {
 }
 
 void Object3D::applyTransformations() {
-    // Removed glPushMatrix() and glPopMatrix() from here
     if (rstMode) {
         // RST Mode: Always T-S-R order (reverse of desired R-S-T)
         glTranslatef(translateX, translateY, translateZ);

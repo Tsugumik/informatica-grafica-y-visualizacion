@@ -53,8 +53,6 @@ igvInterface::igvInterface() {
     animateModel = false;
     textureEnabled = true;
     globalAmbientLightOn = true;
-
-    // setupLights(); // Moved to initGLResources
 }
 
 igvInterface::~igvInterface() {
@@ -125,8 +123,8 @@ void igvInterface::keyboardFunc(unsigned char key, int x, int y) {
         case 'p': case 'P': i->camera->toggleProjection(); break;
         case '=': case '+': i->camera->zoom(-1.0f); break;
         case '_': case '-': i->camera->zoom(1.0f); break;
-        case '1': i->selectObject(101); break;
-        case '2': i->selectObject(102); break;
+        case '1': i->selectObject(1); break; // Changed to 1
+        case '2': i->selectObject(2); break; // Changed to 2
         
         // Light movement
         case 'j': i->moveSelectedLight(-move_speed, 0, 0); break; // Left
@@ -136,13 +134,21 @@ void igvInterface::keyboardFunc(unsigned char key, int x, int y) {
         case 'u': i->moveSelectedLight(0, 0, -move_speed); break; // Forward
         case 'o': i->moveSelectedLight(0, 0, move_speed); break;  // Backward
 
-        // Object movement (for compatibility)
+        // Robot DoF selection
+        case '4': if (i->currentObject == 2) i->articulatedModel->prev_dof(); break;
+        case '5': if (i->currentObject == 2) i->articulatedModel->next_dof(); break;
+
+        // Object rotation
         case 'X': if(i->selectedObject) i->selectedObject->rotate(15.0f, 0.0f, 0.0f); break;
         case 'x': if(i->selectedObject) i->selectedObject->rotate(-15.0f, 0.0f, 0.0f); break;
         case 'Y': if(i->selectedObject) i->selectedObject->rotate(0.0f, 15.0f, 0.0f); break;
         case 'y': if(i->selectedObject) i->selectedObject->rotate(0.0f, -15.0f, 0.0f); break;
         case 'Z': if(i->selectedObject) i->selectedObject->rotate(0.0f, 0.0f, 15.0f); break;
         case 'z': if(i->selectedObject) i->selectedObject->rotate(0.0f, 0.0f, -15.0f); break;
+
+        // Object scaling
+        case 'S': if(i->selectedObject) i->selectedObject->scale(1.1f, 1.1f, 1.1f); break;
+        case 's': if(i->selectedObject) i->selectedObject->scale(0.9f, 0.9f, 0.9f); break;
         
         case 'a': case 'A': i->toggleAnimateModel(); break;
         case 'g': case 'G': i->toggleAnimateCamera(); break;
@@ -152,6 +158,7 @@ void igvInterface::keyboardFunc(unsigned char key, int x, int y) {
 
 void igvInterface::specialKeyboardFunc(int key, int x, int y) {
     igvInterface* i = &getInstance();
+    float move_speed = 0.5f;
     if (i->cameraMode) {
         switch (key) {
             case GLUT_KEY_LEFT: i->camera->orbit(-5.0f, 0.0f); break;
@@ -159,8 +166,18 @@ void igvInterface::specialKeyboardFunc(int key, int x, int y) {
             case GLUT_KEY_UP: i->camera->orbit(0.0f, 5.0f); break;
             case GLUT_KEY_DOWN: i->camera->orbit(0.0f, -5.0f); break;
         }
-    } else if (i->selectedObject) {
-        // ... (object movement)
+    } else if (i->currentObject == 2 && i->articulatedInteractionKeyboard) { // Robot DoF control
+        switch (key) {
+            case GLUT_KEY_UP: i->articulatedModel->increase_dof(); break;
+            case GLUT_KEY_DOWN: i->articulatedModel->decrease_dof(); break;
+        }
+    } else if (i->selectedObject) { // General object movement
+        switch (key) {
+            case GLUT_KEY_LEFT: i->selectedObject->translate(-move_speed, 0.0f, 0.0f); break;
+            case GLUT_KEY_RIGHT: i->selectedObject->translate(move_speed, 0.0f, 0.0f); break;
+            case GLUT_KEY_UP: i->selectedObject->translate(0.0f, move_speed, 0.0f); break;   // Up/Down on Y-axis
+            case GLUT_KEY_DOWN: i->selectedObject->translate(0.0f, -move_speed, 0.0f); break; // Up/Down on Y-axis
+        }
     }
     glutPostRedisplay();
 }
@@ -172,10 +189,37 @@ void igvInterface::reshapeFunc(int w, int h) {
     _instance->camera->setAspectRatio((float)w / h);
 }
 
-void igvInterface::process_selection() { /* ... */ }
+void igvInterface::process_selection() {
+    // This is now called from displayFunc
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DITHER);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    camera->applyProjection();
+    camera->applyView();
+    articulatedModel->render_for_selection();
+
+    unsigned char pixel[3];
+    glReadPixels(selection_x, window_height - selection_y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, pixel);
+
+    if (pixel[0] > 0 && pixel[0] <= 3) { // Assuming 1, 2, 3 are valid DoF IDs
+        selected_dof_by_mouse = pixel[0] - 1; // 0-indexed DoF
+        articulatedModel->set_dof(selected_dof_by_mouse);
+    } else {
+        selected_dof_by_mouse = -1;
+    }
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_DITHER);
+    selection_requested = false; // Reset flag
+}
 
 void igvInterface::displayFunc() {
     igvInterface* i = &getInstance();
+
+    if (selection_requested) {
+        i->process_selection();
+    }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
@@ -232,13 +276,46 @@ void igvInterface::idleFunc() {
 
     glutPostRedisplay();
 }
-void igvInterface::mouseFunc(int button, int state, int x, int y) { /* ... */ }
-void igvInterface::motionFunc(int x, int y) { /* ... */ }
+
+void igvInterface::mouseFunc(int button, int state, int x, int y) {
+    igvInterface* i = &getInstance();
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+        if (!i->articulatedInteractionKeyboard) {
+            selection_requested = true;
+            selection_x = x;
+            selection_y = y;
+            last_mouse_y = y;
+            glutPostRedisplay(); // Request a redraw to process selection
+        }
+    }
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+        selected_dof_by_mouse = -1;
+    }
+}
+
+void igvInterface::motionFunc(int x, int y) {
+    igvInterface* i = &getInstance();
+    if (selected_dof_by_mouse != -1) {
+        float dy = y - last_mouse_y;
+        if (dy > 0) i->articulatedModel->decrease_dof();
+        if (dy < 0) i->articulatedModel->increase_dof();
+        last_mouse_y = y;
+        glutPostRedisplay();
+    }
+}
 
 void igvInterface::create_menus() {
     int shading_menu = glutCreateMenu(shading_menu_callback);
     glutAddMenuEntry("Flat", 1);
     glutAddMenuEntry("Smooth", 2);
+
+    int interaction_menu = glutCreateMenu(interaction_menu_callback);
+    glutAddMenuEntry("Keyboard", 1);
+    glutAddMenuEntry("Mouse (Picking)", 2);
+
+    int animation_menu = glutCreateMenu(animation_menu_callback);
+    glutAddMenuEntry("Toggle Model Animation", 1);
+    glutAddMenuEntry("Toggle Camera Animation", 2);
 
     int material_menu = glutCreateMenu(material_menu_callback);
     glutAddMenuEntry("Rubber", 1);
@@ -275,8 +352,10 @@ void igvInterface::create_menus() {
     glutAddSubMenu("Textures", texture_main_menu);
     glutAddSubMenu("Floor Material", material_menu);
     glutAddSubMenu("Shading", shading_menu);
-    glutAddMenuEntry("Select Cow", 101);
-    glutAddMenuEntry("Select Robot", 102);
+    glutAddSubMenu("Interaction Mode", interaction_menu); // Added Interaction Mode menu
+    glutAddSubMenu("Animation", animation_menu); // Added Animation menu
+    glutAddMenuEntry("Select Cow", 1); // Changed to 1
+    glutAddMenuEntry("Select Robot", 2); // Changed to 2
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
@@ -291,20 +370,25 @@ void igvInterface::initialize_callbacks() {
 }
 
 void igvInterface::selectObject(int objectNum) {
-    if (objectNum == 101) selectedObject = triangleMesh;
-    else if (objectNum == 102) selectedObject = articulatedModel;
+    if (objectNum == 1) { // Cow
+        selectedObject = triangleMesh;
+        currentObject = 1;
+    } else if (objectNum == 2) { // Robot
+        selectedObject = articulatedModel;
+        currentObject = 2;
+    }
     selectedLight = -1;
 }
 
 void igvInterface::setShading(bool flat) { flatShading = flat; }
+void igvInterface::setInteraction(bool keyboard) { articulatedInteractionKeyboard = keyboard; } // Added setInteraction
+void igvInterface::toggleAnimateModel() { animateModel = !animateModel; }
+void igvInterface::toggleAnimateCamera() { animateCamera = !animateCamera; }
+
 void igvInterface::setFloorMaterial(int materialIndex) { floor->setMaterial(materialIndex); }
 void igvInterface::toggleTexture() { textureEnabled = !textureEnabled; floor->toggleTexture(textureEnabled); }
 void igvInterface::setFloorTexture(int textureIndex) { floor->setTexture(textureIndex); }
 void igvInterface::setTextureFilter(int filterType) { floor->setTextureFilters(filterType); }
-
-// Added back the missing definitions
-void igvInterface::toggleAnimateModel() { animateModel = !animateModel; }
-void igvInterface::toggleAnimateCamera() { animateCamera = !animateCamera; }
 
 void igvInterface::toggleLight(int lightIndex) {
     if (lightIndex == -1) { // Global ambient
@@ -333,6 +417,15 @@ void menu_callback(int option) {
 void shading_menu_callback(int option) {
     igvInterface::getInstance().setShading(option == 1);
     glutPostRedisplay();
+}
+
+void interaction_menu_callback(int option) { // Added interaction_menu_callback
+    igvInterface::getInstance().setInteraction(option == 1);
+}
+
+void animation_menu_callback(int option) {
+    if (option == 1) igvInterface::getInstance().toggleAnimateModel();
+    if (option == 2) igvInterface::getInstance().toggleAnimateCamera();
 }
 
 void material_menu_callback(int option) {
