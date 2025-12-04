@@ -76,7 +76,7 @@ void igvInterface::setupLights() {
 
     // GL_LIGHT2 - Spotlight
     lights.push_back(std::make_unique<Light>(SPOTLIGHT, GL_LIGHT2));
-    lights[2]->setPosition(5.0f, 5.0f, 0.0f);
+    lights[2]->setPosition(5.0f, 8.0f, 5.0f);
     GLfloat dir2[] = {-1.0f, -1.0f, 0.0f};
     lights[2]->setDirection(dir2);
     GLfloat diff2[] = {1.0f, 0.5f, 0.5f, 1.0f}; // Reddish
