@@ -60,8 +60,7 @@ void Object3D::resetTransformations() {
 }
 
 void Object3D::applyTransformations() {
-    glPushMatrix();
-
+    // Removed glPushMatrix() and glPopMatrix() from here
     if (rstMode) {
         // RST Mode: Always T-S-R order (reverse of desired R-S-T)
         glTranslatef(translateX, translateY, translateZ);
@@ -92,4 +91,3 @@ void Object3D::applyTransformations() {
 void Object3D::clearTransformationHistory() {
     transformationHistory.clear();
 }
-
