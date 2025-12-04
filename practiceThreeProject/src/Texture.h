@@ -8,7 +8,6 @@
 #endif
 
 #include <string>
-// #include "stb_image.h" // Removed
 
 class Texture {
 public:
